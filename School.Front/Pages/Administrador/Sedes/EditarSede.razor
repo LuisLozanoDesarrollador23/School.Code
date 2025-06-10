@@ -1,0 +1,121 @@
+﻿@page "/sede/editar/{IdSede}"
+@using School.Shared
+@using School.Shared.Service
+@using School.Shared.Transferencia.Modelos
+@using School.Front.Layout.View
+@using School.Shared.Service.General.Colegios
+@using School.Shared.Service.General.Sedes
+@using School.Shared.Transferencia.Modelos.Sede
+@using School.Shared.Transferencia.Modelos.SedeAggregament.Request
+
+<PageTitle>Editar sede</PageTitle>
+
+<h1>Editar Sede</h1>
+
+@if (ColegioRegistrado == null && string.IsNullOrWhiteSpace(errorMesage))
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    if (!string.IsNullOrWhiteSpace(errorMesage))
+    {
+        <ErrorView UserMessage="@errorMesage" DevMessage="@errorMesage"></ErrorView>
+    }
+    else
+    {
+        <p>Editar la sede colegio @ColegioRegistrado?.nombre</p>
+        <div class="container mt-4">
+            <div class="d-flex justify-content-between mb-3">
+                <div>
+                    <a href="/sede/editar/@IdSede/add/grado" class="btn btn-success">Registrar cursos</a>
+                </div>
+            </div>
+
+            <EditForm Model="SedeEditar" OnSubmit="Submit" class="container mt-4">
+                <div class="form-group">
+                    <label for="name">Nombre</label>
+                    <InputText id="name" @bind-Value="SedeEditar.nombre" class="form-control mb-3" placeholder="Ingrese el nombre de la sede"/>
+                </div>
+                <div class="form-group">
+                    <label for="location">Ubicación</label>
+                    <InputText id="location" @bind-Value="SedeEditar.ubicacion" class="form-control mb-3" placeholder="Ingrese la ubicación"/>
+                </div>
+                <div class="form-group">
+                    <label for="address">Dirección</label>
+                    <InputText id="address" @bind-Value="SedeEditar.direccion" class="form-control mb-3" placeholder="Ingrese la dirección"/>
+                </div>
+                <button type="submit" class="btn btn-primary">Editar Registro</button>
+            </EditForm>
+        </div>
+    }
+}
+
+@code
+{
+    [Parameter]
+    public string IdSede { get; set; }
+
+    private EditarSedeSpec SedeEditar = new();
+
+    private Colegio? ColegioRegistrado;
+
+    private SedeColegio? SedeColegio;
+
+    private string? errorMesage { get; set; }
+
+    /// <summary>
+    ///     Inicializa la clase, consultando los datos del colegio y preparando el formulario de sede para su creación
+    /// </summary>
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await ConsultarColegio();
+            await ConsultarSede();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMesage = ex.Message;
+        }
+    }
+
+    private async Task ConsultarColegio()
+    {
+        var response = await ServiceColegio.BuscarColegio();
+        if (response.status)
+        {
+            ColegioRegistrado = response.colegio;
+            SedeEditar.colegio = CommonValues.IdColegio;
+        }
+    }
+
+    private async Task ConsultarSede()
+    {
+        var response = await ServiceSede.BuscarSedes(IdSede);
+        if (response.status)
+        {
+            SedeColegio = response.sede;
+            SedeEditar.nombre = SedeColegio!.nombre;
+            SedeEditar.ubicacion = SedeColegio.ubicacion;
+            SedeEditar.direccion = SedeColegio.direccion;
+        }
+    }
+
+
+    /// <summary>
+    ///     Permite la creación de una sede
+    /// </summary>
+    /// <returns></returns>
+    private async Task Submit()
+    {
+        // Se debe validar los datos del formulario
+
+        // realiza la petición al servicio
+        var response = await ApiClient.CrearRegistro("sedes", SedeEditar);
+    }
+
+}

@@ -1,0 +1,46 @@
+﻿<div class="top-row ps-3 navbar navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand text-white" href="">Inicio</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-building fs-5 me-2 align-middle" aria-hidden="true"></span> Sedes
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/cursos">
+                <span class="bi bi-journal-bookmark-fill fs-5 me-2 align-middle" aria-hidden="true"></span> Cursos
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/materias">
+                <span class="bi bi-book fs-5 me-2 align-middle" aria-hidden="true"></span> Materias
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/usuarios">
+                <span class="bi bi-people-fill fs-5 me-2 align-middle" aria-hidden="true"></span> Usuarios
+            </NavLink>
+        </div>
+    </nav>
+</div>
+
+
+@code {
+    private bool collapseNavMenu = true;
+
+    public string? NavMenuCssClass => collapseNavMenu ? "show" : "collapse";
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+}

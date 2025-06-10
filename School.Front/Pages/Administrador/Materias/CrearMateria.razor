@@ -1,0 +1,120 @@
+﻿@page "/materia/crear"
+@using System.Text.Json
+@using School.Shared
+@using School.Shared.Service
+@using School.Shared.Transferencia.Modelos
+@using School.Shared.Transferencia.Modelos.GradoAggregament.Response
+@using School.Shared.Transferencia.Modelos.MateriaAggregament.Request
+@using School.Front.Layout.View
+
+<PageTitle>Materias</PageTitle>
+
+<h1>Materia</h1>
+
+<p>Permite el registro de materia para añadir a los pensum de los cursos.</p>
+
+@if (ColegioRegistrado == null && string.IsNullOrWhiteSpace(errorMesage))
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    if (!string.IsNullOrWhiteSpace(errorMesage))
+    {
+        <ErrorView UserMessage="@errorMesage" DevMessage="@errorMesage"></ErrorView>
+    }
+    else
+    {
+        <EditForm Model="materiaRegistrar" OnSubmit="Submit" class="container mt-4">
+            <div class="form-group">
+                <label for="name">Nombre</label>
+                <InputText id="name" @bind-Value="materiaRegistrar.nombre" class="form-control mb-3" placeholder="Ingrese el nombre de la materia"/>
+            </div>
+            <div class="form-group">
+                <label for="selectedOption">Grado</label>
+                <InputSelect id="selectedOption" @bind-Value="materiaRegistrar.grado" class="form-select">
+                    <option value="">--Seleccione--</option>
+                    @if (GradosRegistrados != null)
+                    {
+                        @foreach (var option in GradosRegistrados)
+                        {
+                            <option value="@option.id">@option.descripcion</option>
+                        }
+                    }
+                </InputSelect>
+            </div>
+            <button type="submit" class="btn btn-primary">Crear registro</button>
+        </EditForm>
+    }
+}
+
+
+@code {
+
+    private CrearMateriaSpec materiaRegistrar = new();
+
+    private Colegio? ColegioRegistrado;
+
+    private List<Grado>? GradosRegistrados;
+
+    private string? errorMesage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await BuscarColegio();
+            await BuscarGrados();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMesage = ex.Message;
+        }
+    }
+
+    private async Task BuscarColegio()
+    {
+        var response = await ApiClient.ConsultarRegistros("colegios", CommonValues.IdColegio);
+        if (string.IsNullOrWhiteSpace(response.Data))
+        {
+            errorMesage = "La consulta del objeto a visualizar presento algún error, por favor vuelvalo a intentar";
+            StateHasChanged();
+            return;
+        }
+
+        ColegioRegistrado = JsonSerializer.Deserialize<Colegio>(response.Data);
+    }
+
+    private async Task BuscarGrados()
+    {
+        /// TODO:Se debe remplazar a la nueva forma
+        var response = await ApiClient.ConsultarRegistros("grados");
+        if (string.IsNullOrWhiteSpace(response.Data))
+        {
+            errorMesage = "La consulta del objeto a visualizar presento algún error, por favor vuelvalo a intentar";
+            StateHasChanged();
+            return;
+        }
+
+        GradosRegistrados = JsonSerializer.Deserialize<List<Grado>>(response.Data);
+    }
+
+    /// <summary>
+    ///     Permite la creación de una materia
+    /// </summary>
+    private async Task Submit()
+    {
+        // Se debe validar los datos del formulario
+
+        // realiza la petición al servicio
+        var response = await ApiClient.CrearRegistro("materias", materiaRegistrar);
+
+        if (response.Success)
+        {
+        }
+    }
+
+}

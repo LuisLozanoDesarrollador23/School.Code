@@ -1,0 +1,156 @@
+﻿@page "/profesor/curso/editar/{IdCurso}"
+@using System.Text.Json
+@using School.Shared
+@using School.Shared.Service
+@using School.Shared.Transferencia.Modelos
+@using School.Front.Layout.View
+@using School.Shared.Service.General.Grados
+@using School.Shared.Service.General.Sedes
+@using School.Shared.Transferencia.Modelos.CursoAggregament.Request
+@using School.Shared.Transferencia.Modelos.GradoAggregament.Response
+@using School.Shared.Transferencia.Modelos.Sede
+
+<PageTitle>Curso</PageTitle>
+
+<div class="container mt-4">
+    <h1>Gestión del Curso</h1>
+    <p>Permite al profesor gestionar el curso.</p>
+
+    @if (search && string.IsNullOrWhiteSpace(errorMesage))
+    {
+        <p>
+            <em>Loading...</em>
+        </p>
+    }
+    else
+    {
+        if (!string.IsNullOrWhiteSpace(errorMesage))
+        {
+            <ErrorView UserMessage="@errorMesage" DevMessage="@errorMesage"></ErrorView>
+        }
+        else
+        {
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-primary text-white d-flex align-items-center">
+                    <h5 class="card-title mb-0">Detalles del Curso</h5>
+                    <div class="ms-auto">
+                        <a href="/" class="btn btn-success">Ver notas estudiantes</a>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="form-group mb-2">
+                        <label class="form-label" for="nombreCurso">
+                            <i class="bi bi-journal-text me-2"></i>Nombre del Curso:
+                        </label>
+                        <span id="nombreCurso" class="fw-bold">1-A</span>
+                    </div>
+                </div>
+
+                <table class="table table-striped table-bordered">
+                    <thead class="thead-dark">
+                    <tr>
+                        <th>Periodo</th>
+                        <th>Estudiantes pendientes de calificación</th>
+                        <th>Porcentaje</th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+
+                    <tr>
+                        <td>Periodo 1</td>
+                        <td>11</td>
+                        <td>80%</td>
+                        <td>
+                            <a href="/profesor/curso/editar/@IdCurso/add/nota" class="btn btn-sm btn-info">Añadir nota</a>
+                        </td>
+                        <td>
+                            <a href="/profesor/curso/editar/@IdCurso/calificar-estudiante" class="btn btn-sm btn-info">Calificar estudiantes</a>
+                        </td>
+                    </tr>
+
+
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public string IdCurso { get; set; }
+
+    private bool search { get; set; }
+    private CrearCursoSpec cursoRegistrar = new();
+
+    private Colegio? ColegioRegistrado;
+
+    private List<SedeColegio>? sedesRegistradas;
+
+    private List<Grado>? Grados { get; set; }
+
+    private string? errorMesage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            search = true;
+            await BuscarColegio();
+            await ConsultarGrados();
+            await ConsultarSedes();
+            search = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMesage = ex.Message;
+        }
+    }
+
+    private async Task BuscarColegio()
+    {
+        var response = await ApiClient.ConsultarRegistros("colegios", CommonValues.IdColegio);
+        if (string.IsNullOrWhiteSpace(response.Data))
+        {
+            errorMesage = "La consulta del objeto a visualizar presento algún error, por favor vuelvalo a intentar";
+            StateHasChanged();
+            return;
+        }
+
+        ColegioRegistrado = JsonSerializer.Deserialize<Colegio>(response.Data);
+    }
+
+    private async Task ConsultarGrados()
+    {
+        var response = await ServiceGrado.BuscarGrados();
+        if (response.status)
+        {
+            Grados = response.Grados;
+        }
+    }
+
+    private async Task ConsultarSedes()
+    {
+        var response = await ServiceSede.BuscarSedes();
+        if (response.status)
+        {
+            sedesRegistradas = response.sedes;
+        }
+    }
+
+    private async Task Submit()
+    {
+        cursoRegistrar.anio_vigencia = DateTime.Now.Year;
+        var response = await ApiClient.CrearRegistro("cursos", cursoRegistrar);
+
+        if (response.Success)
+        {
+// Acción posterior al éxito de la creación del curso
+        }
+    }
+
+}

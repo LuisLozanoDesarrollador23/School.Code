@@ -1,0 +1,79 @@
+﻿@if (IsView)
+{
+    <table class="table">
+        <thead>
+        @foreach (var title in TitleTable)
+        {
+            <th>@title</th>
+        }
+        <tr>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+
+        @{
+            var isFirist = true;
+        }
+        @foreach (var item in Objects)
+        {
+            <tr>
+                @if (isFirist)
+                {
+                    <td>
+                        <a href="/@item"> Editar</a>
+                    </td>
+                    isFirist = false;
+                }
+                else
+                {
+                    @foreach (var data in item)
+                    {
+                        <td>@data</td>
+                    }
+                }
+            </tr>
+            isFirist = true;
+        }
+
+        </tbody>
+    </table>
+}
+
+@if (!IsView)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+
+
+@code {
+
+    [Parameter] public bool IsView { get; set; }
+
+    /// <summary>
+    ///     Listado del encabezado de la tabla
+    /// </summary>
+    [Parameter]
+    public List<string>? TitleTable { get; set; }
+
+    /// <summary>
+    ///     El primer valor debe ser el identificador del objeto
+    /// </summary>
+    [Parameter]
+    public List<List<string>>? Objects { get; set; }
+
+    [Parameter] public string? Message { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Objects is null || !Objects.Any() && string.IsNullOrWhiteSpace(Message))
+        {
+            Message = "No es posible realizar la construcción de la tabla";
+        }
+
+        StateHasChanged();
+    }
+
+}

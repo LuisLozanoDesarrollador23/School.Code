@@ -1,0 +1,143 @@
+﻿@page "/curso/crear"
+@using System.Text.Json
+@using School.Shared
+@using School.Shared.Service
+@using School.Shared.Transferencia.Modelos
+@using School.Front.Layout.View
+@using School.Shared.Service.General.Grados
+@using School.Shared.Service.General.Sedes
+@using School.Shared.Transferencia.Modelos.CursoAggregament.Request
+@using School.Shared.Transferencia.Modelos.GradoAggregament.Response
+@using School.Shared.Transferencia.Modelos.Sede
+
+<PageTitle>Cursos</PageTitle>
+
+<h1>Curso</h1>
+
+<p>Permite el registro de un curso para el año @DateTime.Now.Year 1.</p>
+
+@if (search && string.IsNullOrWhiteSpace(errorMesage))
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    if (!string.IsNullOrWhiteSpace(errorMesage))
+    {
+        <ErrorView UserMessage="@errorMesage" DevMessage="@errorMesage"></ErrorView>
+    }
+    else
+    {
+        <EditForm Model="cursoRegistrar" OnSubmit="Submit" class="container mt-4">
+            <div class="form-group">
+                <label for="name">Nombre</label>
+                <InputText id="name" @bind-Value="cursoRegistrar.descripcion" class="form-control mb-3" placeholder="Ingrese el nombre de la materia"/>
+            </div>
+            <div class="form-group">
+                <label for="selectedOption">Sede</label>
+                <InputSelect id="selectedOption" @bind-Value="cursoRegistrar.sede" class="form-select">
+                    <option value="">--Seleccione--</option>
+                    @if (sedesRegistradas != null)
+                    {
+                        @foreach (var option in sedesRegistradas)
+                        {
+                            <option value="@option.id">@option.nombre</option>
+                        }
+                    }
+                </InputSelect>
+            </div>
+            <div class="form-group">
+                <label for="selectedOption">Grado</label>
+                <InputSelect id="selectedOption" @bind-Value="cursoRegistrar.grado" class="form-select">
+                    <option value="">--Seleccione--</option>
+                    @if (Grados != null)
+                    {
+                        @foreach (var option in Grados)
+                        {
+                            <option value="@option.id">@option.descripcion</option>
+                        }
+                    }
+                </InputSelect>
+            </div>
+            <button type="submit" class="btn btn-primary">Crear registro</button>
+        </EditForm>
+    }
+}
+
+@code {
+
+    private bool search { get; set; }
+    private CrearCursoSpec cursoRegistrar = new();
+
+    private Colegio? ColegioRegistrado;
+
+    private List<SedeColegio>? sedesRegistradas;
+
+    private List<Grado>? Grados { get; set; }
+
+    private string? errorMesage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            search = true;
+            await BuscarColegio();
+            await ConsultarGrados();
+            await ConsultarSedes();
+            search = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMesage = ex.Message;
+        }
+    }
+
+    private async Task BuscarColegio()
+    {
+        var response = await ApiClient.ConsultarRegistros("colegios", CommonValues.IdColegio);
+        if (string.IsNullOrWhiteSpace(response.Data))
+        {
+            errorMesage = "La consulta del objeto a visualizar presento algún error, por favor vuelvalo a intentar";
+            StateHasChanged();
+            return;
+        }
+
+        ColegioRegistrado = JsonSerializer.Deserialize<Colegio>(response.Data);
+    }
+
+    private async Task ConsultarGrados()
+    {
+        var response = await ServiceGrado.BuscarGrados();
+        if (response.status)
+        {
+            Grados = response.Grados;
+        }
+    }
+
+    private async Task ConsultarSedes()
+    {
+        var response = await ServiceSede.BuscarSedes();
+        if (response.status)
+        {
+            sedesRegistradas = response.sedes;
+        }
+    }
+
+    /// <summary>
+    ///     Permite la creación de un curso
+    /// </summary>
+    private async Task Submit()
+    {
+        cursoRegistrar.anio_vigencia = DateTime.Now.Year;
+        var response = await ApiClient.CrearRegistro("cursos", cursoRegistrar);
+
+        if (response.Success)
+        {
+        }
+    }
+
+}

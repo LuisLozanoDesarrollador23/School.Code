@@ -1,0 +1,158 @@
+﻿@page "/usuario/crear"
+@using System.Text.Json
+@using School.Shared
+@using School.Shared.Service
+@using School.Shared.Transferencia.Modelos
+@using School.Shared.Transferencia.Modelos.GradoAggregament.Response
+@using School.Shared.Transferencia.Modelos.MateriaAggregament.Request
+@using School.Front.Layout.View
+@using School.Shared.Transferencia.Modelos.UsuarioAggregament.Request
+
+<PageTitle>Crear usuario</PageTitle>
+
+<h1>Usuario</h1>
+
+<p>Permite el registro de un usuario .</p>
+
+@if (ColegioRegistrado == null && string.IsNullOrWhiteSpace(errorMesage))
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    if (!string.IsNullOrWhiteSpace(errorMesage))
+    {
+        <ErrorView UserMessage="@errorMesage" DevMessage="@errorMesage"></ErrorView>
+    }
+    else
+    {
+        <EditForm Model="usuarioRegistrar" OnSubmit="Submit" class="container mt-4">
+            <div class="form-group">
+                <label for="selectedOption">Tipo Usuario</label>
+                <InputSelect id="selectedOption" @bind-Value="usuarioRegistrar.TipoDocumento" class="form-select">
+                    <option value="">--Seleccione--</option>
+                    @if (GradosRegistrados != null)
+                    {
+                        @foreach (var option in GradosRegistrados)
+                        {
+                            <option value="@option.id">@option.descripcion</option>
+                        }
+                    }
+                </InputSelect>
+            </div>
+            <div class="form-group">
+                <label for="selectedOption">Tipo de documento</label>
+                <InputSelect id="selectedOption" @bind-Value="usuarioRegistrar.TipoDocumento" class="form-select">
+                    <option value="">--Seleccione--</option>
+                    @if (GradosRegistrados != null)
+                    {
+                        @foreach (var option in GradosRegistrados)
+                        {
+                            <option value="@option.id">@option.descripcion</option>
+                        }
+                    }
+                </InputSelect>
+            </div>
+            <div class="form-group">
+                <label for="name">Número de documento</label>
+                <InputText id="name" @bind-Value="usuarioRegistrar.NumeroDocumento" class="form-control mb-3" placeholder="Ingrese el número de documento"/>
+            </div>
+            <div class="form-group">
+                <label for="name">Primer nombre</label>
+                <InputText id="name" @bind-Value="usuarioRegistrar.PrimerNombre" class="form-control mb-3" placeholder="Ingrese el primer nombre del usuario"/>
+            </div>
+            <div class="form-group">
+                <label for="name">Segundo nombre</label>
+                <InputText id="name" @bind-Value="usuarioRegistrar.SegundoNombre" class="form-control mb-3" placeholder="Ingrese el segundo nombre del usuario"/>
+            </div>
+            <div class="form-group">
+                <label for="name">Primer Apellido</label>
+                <InputText id="name" @bind-Value="usuarioRegistrar.PrimerApellido" class="form-control mb-3" placeholder="Ingrese el primer apellido del usuario"/>
+            </div>
+            <div class="form-group">
+                <label for="name">Segundo Apellido</label>
+                <InputText id="name" @bind-Value="usuarioRegistrar.SegundoApellido" class="form-control mb-3" placeholder="Ingrese el segundo apellido del usuario"/>
+            </div>
+            <div class="form-group">
+                <label for="name">Correo</label>
+                <InputText id="name" @bind-Value="usuarioRegistrar.Correo" class="form-control mb-3" placeholder="Ingrese el correo del usuario"/>
+            </div>
+            <div class="form-group">
+                <label for="name">Contraseña</label>
+                <InputText id="name" @bind-Value="usuarioRegistrar.Correo" class="form-control mb-3" placeholder="Ingrese la contreña"/>
+            </div>
+            <button type="submit" class="btn btn-primary">Crear registro</button>
+        </EditForm>
+    }
+}
+
+
+@code {
+
+    private CrearUsuarioSpec usuarioRegistrar = new();
+
+    private Colegio? ColegioRegistrado;
+
+    private List<Grado>? GradosRegistrados;
+
+    private string? errorMesage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await BuscarColegio();
+            await BuscarGrados();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMesage = ex.Message;
+        }
+    }
+
+    private async Task BuscarColegio()
+    {
+        var response = await ApiClient.ConsultarRegistros("colegios", CommonValues.IdColegio);
+        if (string.IsNullOrWhiteSpace(response.Data))
+        {
+            errorMesage = "La consulta del objeto a visualizar presento algún error, por favor vuelvalo a intentar";
+            StateHasChanged();
+            return;
+        }
+
+        ColegioRegistrado = JsonSerializer.Deserialize<Colegio>(response.Data);
+    }
+
+    private async Task BuscarGrados()
+    {
+        /// TODO:Se debe remplazar a la nueva forma
+        var response = await ApiClient.ConsultarRegistros("grados");
+        if (string.IsNullOrWhiteSpace(response.Data))
+        {
+            errorMesage = "La consulta del objeto a visualizar presento algún error, por favor vuelvalo a intentar";
+            StateHasChanged();
+            return;
+        }
+
+        GradosRegistrados = JsonSerializer.Deserialize<List<Grado>>(response.Data);
+    }
+
+    /// <summary>
+    ///     Permite la creación de un usuario
+    /// </summary>
+    private async Task Submit()
+    {
+        // Se debe validar los datos del formulario
+
+        // realiza la petición al servicio
+        var response = await ApiClient.CrearRegistro("materias", usuarioRegistrar);
+
+        if (response.Success)
+        {
+        }
+    }
+
+}

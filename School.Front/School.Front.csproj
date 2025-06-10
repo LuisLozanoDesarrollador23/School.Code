@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>c2fd6cda-ecf0-461b-ac2d-20d996545cac</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BlazorStrap" Version="5.2.100.61524" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.2" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Pages\Profesor\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\School.Shared\School.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Pages\Administrador\Usuarios\Estudiantes\EstudiantesDashboard.razor" />
+    <_ContentIncludedByDefault Remove="Pages\Administrador\Usuarios\Estudiantes\GestionarEstudiante.razor" />
+    <_ContentIncludedByDefault Remove="Pages\Profesor\Estudiantes\EstudiantesDashboard.razor" />
+    <_ContentIncludedByDefault Remove="Pages\Profesor\Estudiantes\GestionarEstudiante.razor" />
+  </ItemGroup>
+
+</Project>

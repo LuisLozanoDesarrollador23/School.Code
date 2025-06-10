@@ -1,0 +1,58 @@
+﻿@page "/materias"
+@using System.Text.Json
+@using School.Shared.Service
+@using School.Shared.Transferencia.Modelos.MateriaAggregament.Response
+
+<PageTitle>Materias</PageTitle>
+
+<h1>Materias</h1>
+
+<p>Listado de las materias que hacen parte de los pesum de los cursos.</p>
+
+
+<div class="container mt-4">
+    <!-- Botones en la parte superior -->
+    <div class="d-flex justify-content-between mb-3">
+        <div>
+            <button class="btn btn-primary" id="btnRefrescar" @onclick="RefrescarDatos">Refrescar</button>
+            <a href="/materia/crear" class="btn btn-success">Registrar</a>
+        </div>
+    </div>
+
+    <!-- Tabla mejorada -->
+    <table class="table table-striped table-bordered">
+        <thead class="thead-dark">
+        <tr>
+            <th>Nombre</th>
+            <th>Acciones</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in _materiasRegistradas)
+        {
+            <tr>
+                <td>@item.nombre</td>
+                <td>
+                    <a href="/@item" class="btn btn-sm btn-info">Editar</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+@code {
+
+    private List<MateriaColegio>? _materiasRegistradas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await ApiClient.ConsultarRegistros("materias");
+        _materiasRegistradas = JsonSerializer.Deserialize<List<MateriaColegio>>(response.Data);
+    }
+
+    private void RefrescarDatos()
+    {
+    }
+
+}

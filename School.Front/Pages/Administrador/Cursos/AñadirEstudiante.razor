@@ -1,0 +1,160 @@
+﻿@page "/curso/editar/{IdSede}/add/estudiante"
+@using School.Shared.Transferencia.Modelos
+@using School.Front.Layout.View
+@using School.Shared.Service.General.Colegios
+@using School.Shared.Service.General.Grados
+@using School.Shared.Service.General.Sedes
+@using School.Shared.Transferencia.Modelos.GradoAggregament.Response
+@using School.Shared.Transferencia.Modelos.Sede
+@using School.Shared.Transferencia.Modelos.SedeAggregament.Request
+@using School.Shared.Transferencia.Modelos.SedeAggregament.Response
+@using School.Front.Pages.Administrador.Sedes
+
+<PageTitle>Editar sede</PageTitle>
+
+<h1>Editar Sede</h1>
+
+@if (ColegioRegistrado == null && string.IsNullOrWhiteSpace(errorMesage))
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    if (!string.IsNullOrWhiteSpace(errorMesage))
+    {
+        <ErrorView UserMessage="@errorMesage" DevMessage="@errorMesage"></ErrorView>
+    }
+    else
+    {
+        <p>Añadir grados para la sede @SedeColegio!.nombre del colegio @ColegioRegistrado?.nombre</p>
+        <div class="container mt-4">
+            <div class="d-flex justify-content-between mb-3">
+                <div>
+                    <button class="btn btn-primary" id="btnRefrescar" @onclick="@AbrirModalGrado">Añadir grado</button>
+                </div>
+            </div>
+
+            <table class="table table-striped table-bordered">
+                <thead class="thead-dark">
+                <tr>
+                    <th>Grado</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in GradoHabilitados)
+                {
+                    <tr>
+                        <td>@Grados.FirstOrDefault(i => i.id == item.grado).descripcion</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" id="btnEliminar">Eliminar</button>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <ModalAddGradoEnSede IsVisible="@isModalVisible" IsVisibleChanged="@(value => isModalVisible = value)"
+                             GradosPendientes="@GradosPendientes" OnGradoSelected="AddGrado"/>
+    }
+}
+
+@code
+{
+    [Parameter] public string IdCurso { get; set; }
+
+    private Colegio? ColegioRegistrado;
+
+    private SedeColegio? SedeColegio;
+
+    private List<Grado>? Grados { get; set; }
+
+    private List<GradoHabilitado>? GradoHabilitados { get; set; }
+
+    private string? errorMesage { get; set; }
+
+    /// <summary>
+    ///     Inicializa la clase, consultando los datos del colegio y preparando el formulario de sede para su creación
+    /// </summary>
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await ConsultarColegio();
+            await ConsultarSede();
+            await ConsultarGrados();
+            await ConsultarGradosHabilitados();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMesage = ex.Message;
+        }
+    }
+
+    private async Task ConsultarColegio()
+    {
+        var response = await ServiceColegio.BuscarColegio();
+        if (response.status)
+        {
+            ColegioRegistrado = response.colegio;
+        }
+    }
+
+    private async Task ConsultarSede()
+    {
+        var response = await ServiceSede.BuscarSedes(IdCurso);
+        if (response.status)
+        {
+            SedeColegio = response.sede;
+        }
+    }
+
+    private async Task ConsultarGrados()
+    {
+        var response = await ServiceGrado.BuscarGrados();
+        if (response.status)
+        {
+            Grados = response.Grados;
+        }
+    }
+
+    private async Task ConsultarGradosHabilitados()
+    {
+        var response = await ServiceSede.BuscarGradosHabilitados();
+        if (response.status)
+        {
+            GradoHabilitados = response.gradosHabilitados;
+        }
+    }
+
+
+    private bool isModalVisible = false;
+
+    private List<Grado>? GradosPendientes { get; set; }
+
+    private void AbrirModalGrado()
+    {
+        // Filtra los grados pendientes que no están habilitados en la sede
+        GradosPendientes = Grados?.Where(grado => !GradoHabilitados!.Any(g => g.grado == grado.id)).ToList();
+        isModalVisible = true;
+    }
+
+    private async Task AddGrado(int gradoId)
+    {
+        // Aquí haces la lógica para habilitar el grado seleccionado
+        // y recargar los grados habilitados en la sede
+        var spec = new AñadirGradoSedeSpec()
+        {
+            sede = int.Parse(IdCurso),
+            grado = gradoId
+        };
+        await ServiceSede.GuardarGradoEnSede(spec);
+        await ConsultarGradosHabilitados();
+        StateHasChanged();
+    }
+
+
+}

@@ -1,0 +1,124 @@
+﻿@page "/profesor/curso/editar/{IdCurso}/calificar-estudiante/"
+@using School.Shared.Transferencia.Modelos
+@using School.Front.Layout.View
+@using School.Shared.Service.General.Colegios
+@using School.Shared.Service.General.Grados
+@using School.Shared.Service.General.Sedes
+@using School.Shared.Transferencia.Modelos.GradoAggregament.Response
+@using School.Shared.Transferencia.Modelos.Sede
+@using School.Shared.Transferencia.Modelos.SedeAggregament.Response
+@using School.Shared.Service.General.Cursos
+@using School.Shared.Transferencia.Modelos.CursoAggregament.Request
+
+<PageTitle>Calificar estudiante</PageTitle>
+
+<h1>Calificar estudiante</h1>
+
+@if (ColegioRegistrado == null && string.IsNullOrWhiteSpace(errorMesage))
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    if (!string.IsNullOrWhiteSpace(errorMesage))
+    {
+        <ErrorView UserMessage="@errorMesage" DevMessage="@errorMesage"></ErrorView>
+    }
+    else
+    {
+        <EditForm Model="@nota" OnValidSubmit="@CrearNota" class="container mt-4">
+            <DataAnnotationsValidator/>
+            <ValidationSummary class="alert alert-danger"/>
+
+            <div class="form-group">
+                <label for="estudiante">Estudiante</label>
+                <InputSelect id="estudiante" @bind-Value="nota.Nombre" class="form-select mb-3">
+                    <option value="" selected>--Seleccione un estudiante--</option>
+                </InputSelect>
+            </div>
+
+            <div class="form-group">
+                <label for="nota">Nota</label>
+                <InputSelect id="nota" @bind-Value="nota.Nombre" class="form-select mb-3">
+                    <option value="" selected>--Seleccione una nota--</option>
+                </InputSelect>
+            </div>
+            <div class="form-group">
+                <label for="porcentaje">Nota (1 a 100)</label>
+                <InputNumber id="porcentaje" @bind-Value="nota.Porcentaje" class="form-control mb-3" placeholder="Ingrese el porcentaje"/>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Guardar Calificación</button>
+        </EditForm>
+    }
+}
+
+@code
+{
+    [Parameter] public string IdCurso { get; set; }
+
+    private Colegio? ColegioRegistrado;
+
+    private SedeColegio? SedeColegio;
+
+    private List<Grado>? Grados { get; set; }
+
+    private List<GradoHabilitado>? GradoHabilitados { get; set; }
+
+    private string? errorMesage { get; set; }
+
+    private AddNotaCursoSpec? nota { get; set; } = new();
+
+    /// <summary>
+    ///     Inicializa la clase, consultando los datos del colegio y preparando el formulario de sede para su creación
+    /// </summary>
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await ConsultarGrados();
+            await ConsultarGradosHabilitados();
+            await ConsultarColegio();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMesage = ex.Message;
+        }
+    }
+
+    private async Task ConsultarColegio()
+    {
+        var response = await ServiceColegio.BuscarColegio();
+        if (response.status)
+        {
+            ColegioRegistrado = response.colegio;
+        }
+    }
+
+    private async Task ConsultarGrados()
+    {
+        var response = await ServiceGrado.BuscarGrados();
+        if (response.status)
+        {
+            Grados = response.Grados;
+        }
+    }
+
+    private async Task ConsultarGradosHabilitados()
+    {
+        var response = await ServiceSede.BuscarGradosHabilitados();
+        if (response.status)
+        {
+            GradoHabilitados = response.gradosHabilitados;
+        }
+    }
+
+
+    private async Task CrearNota()
+    {
+        await ServiceCurso.GuardarNota(nota);
+    }
+}

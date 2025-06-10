@@ -1,0 +1,145 @@
+﻿@page "/admin/estudiantes/"
+@using School.Shared.Service.General.Cursos
+@using School.Shared.Service.General.Grados
+@using School.Shared.Service.General.Sedes
+@using School.Shared.Transferencia.Modelos.CursoAggregament.Response
+@using School.Shared.Transferencia.Modelos.GradoAggregament.Response
+@using School.Shared.Transferencia.Modelos.Sede
+
+<PageTitle>Estudiantes</PageTitle>
+
+<h1>Estudiantes</h1>
+
+<p>Listado de los estudiantes en el curso.</p>
+
+<div class="container mt-4">
+    <!-- Filtro de búsqueda -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-5">
+                    <label for="documento" class="form-label">Buscar por Documento</label>
+                    <InputText id="documento" class="form-control" @bind-Value="filtroDocumento" placeholder="Ingrese el documento"/>
+                </div>
+                <div class="col-md-5">
+                    <label for="nombre" class="form-label">Buscar por Nombre</label>
+                    <InputText id="nombre" class="form-control" @bind-Value="filtroNombre" placeholder="Ingrese el nombre"/>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary mt-4" @onclick="AplicarFiltro">Buscar</button>
+                </div>
+            </div>
+            <div class="col-6">
+                <button class="btn btn-danger mt-4" @onclick="AplicarFiltro">Imprimir boletines finales masivos</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mb-3">
+        <div>
+            <button class="btn btn-primary" id="btnRefrescar" @onclick="RefrescarDatos">Refrescar</button>
+        </div>
+    </div>
+
+    <table class="table table-striped table-bordered">
+        <thead class="thead-dark">
+        <tr>
+            <th>Nombre</th>
+            <th>Curso</th>
+            <th>Materia</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var estudiante in estudiantesFiltrados)
+        {
+            <tr>
+                <td>@estudiante.Nombre</td>
+                <td>@estudiante.Curso</td>
+                <td>@estudiante.Materia</td>
+                <td>
+                    <a href="/gestionar/@estudiante.Nombre" class="btn btn-sm btn-info">Gestionar</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<Grado>? Grados { get; set; }
+    private List<Curso>? _cursosRegistrados;
+    private List<SedeColegio>? _sedesRegistradas;
+
+    private string filtroDocumento { get; set; } = "";
+    private string filtroNombre { get; set; } = "";
+
+    private List<Estudiante> estudiantesRegistrados = new List<Estudiante>
+    {
+        new Estudiante { Nombre = "Juan Pérez", Curso = "1-A", Materia = "Matemáticas" },
+        new Estudiante { Nombre = "María García", Curso = "1-A", Materia = "Matemáticas" },
+        new Estudiante { Nombre = "Carlos López", Curso = "2-B", Materia = "Matemáticas" },
+        new Estudiante { Nombre = "Ana Martínez", Curso = "2-B", Materia = "Matemáticas" }
+    };
+
+    private List<Estudiante> estudiantesFiltrados;
+
+    protected override async Task OnInitializedAsync()
+    {
+        estudiantesFiltrados = estudiantesRegistrados;
+        await RefrescarDatos();
+    }
+
+    private async Task RefrescarDatos()
+    {
+        await ConsultarSedes();
+        await ConsultarGrados();
+        await ConsultarCurso();
+        AplicarFiltro();
+        StateHasChanged();
+    }
+
+    private void AplicarFiltro()
+    {
+        estudiantesFiltrados = estudiantesRegistrados.Where(e =>
+            (string.IsNullOrWhiteSpace(filtroDocumento) || e.Nombre.Contains(filtroDocumento, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(filtroNombre) || e.Nombre.Contains(filtroNombre, StringComparison.OrdinalIgnoreCase))
+        ).ToList();
+    }
+
+    private async Task ConsultarCurso()
+    {
+        var response = await ServiceCurso.BuscarCursos();
+        if (response.status)
+        {
+            _cursosRegistrados = response.cursos;
+            _cursosRegistrados = _cursosRegistrados?.Where(d => d.anio_vigencia == DateTime.Now.Year).ToList();
+        }
+    }
+
+    private async Task ConsultarSedes()
+    {
+        var response = await ServiceSede.BuscarSedes();
+        if (response.status)
+        {
+            _sedesRegistradas = response.sedes;
+        }
+    }
+
+    private async Task ConsultarGrados()
+    {
+        var response = await ServiceGrado.BuscarGrados();
+        if (response.status)
+        {
+            Grados = response.Grados;
+        }
+    }
+
+    public class Estudiante
+    {
+        public string Nombre { get; set; }
+        public string Curso { get; set; }
+        public string Materia { get; set; }
+    }
+
+}

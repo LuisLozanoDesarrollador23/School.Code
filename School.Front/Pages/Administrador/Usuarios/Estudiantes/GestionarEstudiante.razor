@@ -1,0 +1,303 @@
+﻿@page "/admin/estudiantes/{IdEstudiante}"
+@using System.Text.Json
+@using School.Shared
+@using School.Shared.Service
+@using School.Shared.Transferencia.Modelos
+@using School.Front.Layout.View
+@using School.Shared.Service.General.Grados
+@using School.Shared.Service.General.Sedes
+@using School.Shared.Transferencia.Modelos.CursoAggregament.Request
+@using School.Shared.Transferencia.Modelos.GradoAggregament.Response
+@using School.Shared.Transferencia.Modelos.Sede
+
+<PageTitle>Curso</PageTitle>
+
+<div class="container mt-4">
+    <h1>Gestión del estudiante</h1>
+    <p>Permite la impresión de boletín académico.</p>
+
+    @if (search && string.IsNullOrWhiteSpace(errorMesage))
+    {
+        <p>
+            <em>Loading...</em>
+        </p>
+    }
+    else
+    {
+        if (!string.IsNullOrWhiteSpace(errorMesage))
+        {
+            @* <ErrorView UserMessage="@errorMesage" DevMessage="@errorMesage"></ErrorView> *@
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Información del estudiante</h5>
+                </div>
+
+                <div class="card-body">
+                    <div class="form-group mb-2">
+                        <label class="form-label">Documento:</label>
+                        <span class="fw-bold">100*****111</span>
+                    </div>
+                    <div class="form-group mb-2">
+                        <label class="form-label">Nombre completo:</label>
+                        <span class="fw-bold">Luis Ernesto Lozano Rivero</span>
+                    </div>
+
+                    <!-- Select para filtrar por materia -->
+                    <div class="form-group mb-2">
+                        <label class="form-label">Materia:</label>
+                        <select class="form-select" @onchange="OnMateriaChange">
+                            <option value="">Seleccione una materia</option>
+                            @foreach (var materia in materias)
+                            {
+                                <option value="@materia.Id">@materia.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Acordeón de periodos -->
+                <div class="accordion" id="accordionPeriodos">
+                    @foreach (var periodo in periodos)
+                    {
+                        // Filtrar periodos según la materia seleccionada
+                        if (selectedMateriaId == null || periodo.Notas.Any(n => n.MateriaId == selectedMateriaId))
+                        {
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingPeriodo@periodo.Id">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePeriodo@periodo.Id" aria-expanded="false" aria-controls="collapsePeriodo@periodo.Id">
+                                        @periodo.Nombre Periodo
+                                    </button>
+                                </h2>
+                                <div id="collapsePeriodo@periodo.Id" class="accordion-collapse collapse" aria-labelledby="headingPeriodo@periodo.Id" data-bs-parent="#accordionPeriodos">
+                                    <div class="accordion-body">
+                                        <table class="table table-striped table-bordered">
+                                            <thead>
+                                            <tr>
+                                                <th>Nota</th>
+                                                <th>Porcentaje</th>
+                                                <th>Calificación</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            @foreach (var nota in periodo.Notas)
+                                            {
+                                                <tr>
+                                                    <td>@nota.Nombre</td>
+                                                    <td>@nota.Porcentaje%</td>
+                                                    <td>@nota.Calificacion</td>
+                                                </tr>
+                                            }
+                                            </tbody>
+                                        </table>
+                                        <div class="text-end mt-3">
+                                            <a href="/imprimirBoletin/@periodo.Id" class="btn btn-info btn-sm">Imprimir boletín</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Información del estudiante</h5>
+                </div>
+
+                <div class="card-body">
+                    <div class="form-group mb-2">
+                        <label class="form-label">Documento:</label>
+                        <span class="fw-bold">100*****111</span>
+                    </div>
+                    <div class="form-group mb-2">
+                        <label class="form-label">Nombre completo:</label>
+                        <span class="fw-bold">Luis Ernesto Lozano Rivero</span>
+                    </div>
+
+                    <!-- Select para filtrar por materia -->
+                    <div class="form-group mb-2">
+                        <label class="form-label">Materia:</label>
+                        <select class="form-select" @onchange="OnMateriaChange">
+                            <option value="">Seleccione una materia</option>
+                            @foreach (var materia in materias)
+                            {
+                                <option value="@materia.Id">@materia.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Acordeón de periodos -->
+                <div class="accordion" id="accordionPeriodos">
+                    @foreach (var periodo in periodos)
+                    {
+                        // Filtrar periodos según la materia seleccionada
+                        if (selectedMateriaId == null || periodo.Notas.Any(n => n.MateriaId == selectedMateriaId))
+                        {
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingPeriodo@periodo.Id">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePeriodo@periodo.Id" aria-expanded="false" aria-controls="collapsePeriodo@periodo.Id">
+                                        Periodo @periodo.Nombre
+                                    </button>
+                                </h2>
+                                <div id="collapsePeriodo@periodo.Id" class="accordion-collapse collapse" aria-labelledby="headingPeriodo@periodo.Id" data-bs-parent="#accordionPeriodos">
+                                    <div class="accordion-body">
+                                        <table class="table table-striped table-bordered">
+                                            <thead>
+                                            <tr>
+                                                <th>Nota</th>
+                                                <th>Porcentaje</th>
+                                                <th>Calificación</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            @foreach (var nota in periodo.Notas)
+                                            {
+                                                <tr>
+                                                    <td>@nota.Nombre</td>
+                                                    <td>@nota.Porcentaje%</td>
+                                                    <td>@nota.Calificacion</td>
+                                                </tr>
+                                            }
+                                            </tbody>
+                                        </table>
+                                        <div class="text-end mt-3">
+                                            <a href="/imprimirBoletin/@periodo.Id" class="btn btn-info btn-sm">Imprimir boletín</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public string IdEstudiante { get; set; }
+
+    private bool search { get; set; }
+    private CrearCursoSpec cursoRegistrar = new();
+
+    private Colegio? ColegioRegistrado;
+    private List<SedeColegio>? sedesRegistradas;
+    private List<Grado>? Grados { get; set; }
+    private string? errorMesage { get; set; }
+
+    // Nueva propiedad para almacenar la lista de materias
+    private List<Materia> materias = new List<Materia>
+    {
+        new Materia { Id = 1, Nombre = "Matemáticas" },
+        new Materia { Id = 2, Nombre = "Ciencias" },
+        new Materia { Id = 3, Nombre = "Historia" }
+    };
+
+    private int? selectedMateriaId; // Almacena la materia seleccionada
+
+    private List<Periodo> periodos = new List<Periodo>
+    {
+        new Periodo
+        {
+            Id = 1,
+            Nombre = "Primer",
+            Notas = new List<Nota>
+            {
+                new Nota { Nombre = "Nota 1", Porcentaje = 20, Calificacion = 5.0, MateriaId = 1 },
+                new Nota { Nombre = "Nota 2", Porcentaje = 30, Calificacion = 2.0, MateriaId = 2 },
+                new Nota { Nombre = "Nota 3", Porcentaje = 50, Calificacion = 4.0, MateriaId = 1 }
+            }
+        },
+        new Periodo
+        {
+            Id = 2,
+            Nombre = "Segundo",
+            Notas = new List<Nota>
+            {
+                new Nota { Nombre = "Nota 1", Porcentaje = 25, Calificacion = 3.5, MateriaId = 1 },
+                new Nota { Nombre = "Nota 2", Porcentaje = 35, Calificacion = 4.0, MateriaId = 3 },
+                new Nota { Nombre = "Nota 3", Porcentaje = 40, Calificacion = 3.0, MateriaId = 2 }
+            }
+        }
+    };
+
+    public class Periodo
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; }
+        public List<Nota> Notas { get; set; }
+    }
+
+    public class Nota
+    {
+        public string Nombre { get; set; }
+        public int Porcentaje { get; set; }
+        public double Calificacion { get; set; }
+        public int MateriaId { get; set; } // Agregamos un ID de materia a la nota
+    }
+
+    public class Materia
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            search = true;
+            await BuscarColegio();
+            await ConsultarGrados();
+            await ConsultarSedes();
+            search = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMesage = ex.Message;
+        }
+    }
+
+    private async Task BuscarColegio()
+    {
+        var response = await ApiClient.ConsultarRegistros("colegios", CommonValues.IdColegio);
+        if (string.IsNullOrWhiteSpace(response.Data))
+        {
+            errorMesage = "La consulta del objeto a visualizar presentó algún error, por favor vuelva a intentarlo.";
+            StateHasChanged();
+            return;
+        }
+
+        ColegioRegistrado = JsonSerializer.Deserialize<Colegio>(response.Data);
+    }
+
+    private async Task ConsultarGrados()
+    {
+        var response = await ServiceGrado.BuscarGrados();
+        if (response.status)
+        {
+            Grados = response.Grados;
+        }
+    }
+
+    private async Task ConsultarSedes()
+    {
+        var response = await ServiceSede.BuscarSedes();
+        if (response.status)
+        {
+            sedesRegistradas = response.sedes;
+        }
+    }
+
+    private async Task OnMateriaChange(ChangeEventArgs e)
+    {
+        selectedMateriaId = int.TryParse(e.Value.ToString(), out var id) ? id : (int?)null;
+        StateHasChanged(); // Actualiza el estado del componente para reflejar los cambios
+    }
+
+}

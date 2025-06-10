@@ -1,0 +1,92 @@
+﻿@page "/sede/crear"
+@using System.Text.Json
+@using School.Shared
+@using School.Shared.Service
+@using School.Shared.Transferencia.Modelos
+@using School.Front.Layout.View
+@using School.Shared.Transferencia.Modelos.SedeAggregament.Request
+
+<PageTitle>Crear sede</PageTitle>
+
+<h1>Crear Sede</h1>
+
+@if (ColegioRegistrado == null && string.IsNullOrWhiteSpace(errorMesage))
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    if (!string.IsNullOrWhiteSpace(errorMesage))
+    {
+        <ErrorView UserMessage="@errorMesage" DevMessage="@errorMesage"></ErrorView>
+    }
+    else
+    {
+        <p>Crear sedes para el colegio @ColegioRegistrado?.nombre</p>
+        <EditForm Model="SedeRegistar" OnSubmit="Submit" class="container mt-4">
+            <div class="form-group">
+                <label for="name">Nombre</label>
+                <InputText id="name" @bind-Value="SedeRegistar.nombre" class="form-control mb-3" placeholder="Ingrese el nombre de la sede"/>
+            </div>
+            <div class="form-group">
+                <label for="location">Ubicación</label>
+                <InputText id="location" @bind-Value="SedeRegistar.ubicacion" class="form-control mb-3" placeholder="Ingrese la ubicación"/>
+            </div>
+            <div class="form-group">
+                <label for="address">Dirección</label>
+                <InputText id="address" @bind-Value="SedeRegistar.direccion" class="form-control mb-3" placeholder="Ingrese la dirección"/>
+            </div>
+            <button type="submit" class="btn btn-primary">Crear registro</button>
+        </EditForm>
+    }
+}
+
+@code
+{
+
+    private CrearSedeSpec SedeRegistar = new();
+
+    private Colegio? ColegioRegistrado;
+
+    private string? errorMesage { get; set; }
+
+    /// <summary>
+    ///     Inicializa la clase, consultando los datos del colegio y preparando el formulario de sede para su creación
+    /// </summary>
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var response = await ApiClient.ConsultarRegistros("colegios", CommonValues.IdColegio);
+            if (string.IsNullOrWhiteSpace(response.Data))
+            {
+                errorMesage = "La consulta del objeto a visualizar presento algún error, por favor vuelvalo a intentar";
+                StateHasChanged();
+                return;
+            }
+
+            ColegioRegistrado = JsonSerializer.Deserialize<Colegio>(response.Data);
+            SedeRegistar.colegio = CommonValues.IdColegio;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMesage = ex.Message;
+        }
+    }
+
+    /// <summary>
+    ///     Permite la creación de una sede
+    /// </summary>
+    /// <returns></returns>
+    private async Task Submit()
+    {
+        // Se debe validar los datos del formulario
+
+        // realiza la petición al servicio
+        var response = await ApiClient.CrearRegistro("sedes", SedeRegistar);
+    }
+
+}

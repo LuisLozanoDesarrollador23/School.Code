@@ -1,0 +1,100 @@
+﻿@page "/cursos"
+@using School.Shared.Service.General.Cursos
+@using School.Shared.Service.General.Grados
+@using School.Shared.Service.General.Sedes
+@using School.Shared.Transferencia.Modelos.CursoAggregament.Response
+@using School.Shared.Transferencia.Modelos.GradoAggregament.Response
+@using School.Shared.Transferencia.Modelos.Sede
+
+<PageTitle>Cursos</PageTitle>
+
+<h1>Cursos</h1>
+
+<p>Listado de cursos registrados que estan activos.</p>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between mb-3">
+        <div>
+            <button class="btn btn-primary" id="btnRefrescar" @onclick="RefrescarDatos">Refrescar</button>
+            <a href="/curso/crear" class="btn btn-success">Registrar</a>
+        </div>
+    </div>
+
+    <table class="table table-striped table-bordered">
+        <thead class="thead-dark">
+        <tr>
+            <th>Curso</th>
+            <th>Sede</th>
+            <th>Grado</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        @if (_cursosRegistrados != null)
+        {
+            @foreach (var item in _cursosRegistrados)
+            {
+                <tr>
+                    <td>@item.descripcion</td>
+                    <td>@_sedesRegistradas!.FirstOrDefault(i => i.id == item.sede)?.nombre</td>
+                    <td>@Grados!.FirstOrDefault(i => i.id == item.grado)?.descripcion</td>
+                    <td>
+                        <a href="/@item" class="btn btn-sm btn-info">Editar</a>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+@code {
+
+    private List<Grado>? Grados { get; set; }
+
+    private List<Curso>? _cursosRegistrados;
+
+    private List<SedeColegio>? _sedesRegistradas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefrescarDatos();
+    }
+
+    private async Task ConsultarCurso()
+    {
+        var response = await ServiceCurso.BuscarCursos();
+        if (response.status)
+        {
+            _cursosRegistrados = response.cursos;
+            _cursosRegistrados = _cursosRegistrados?.Where(d => d.anio_vigencia == DateTime.Now.Year).ToList();
+        }
+    }
+
+    private async Task ConsultarSedes()
+    {
+        var response = await ServiceSede.BuscarSedes();
+        if (response.status)
+        {
+            _sedesRegistradas = response.sedes;
+        }
+    }
+
+    private async Task ConsultarGrados()
+    {
+        var response = await ServiceGrado.BuscarGrados();
+        if (response.status)
+        {
+            Grados = response.Grados;
+        }
+    }
+
+    private async Task RefrescarDatos()
+    {
+        await ConsultarSedes();
+        await ConsultarGrados();
+        await ConsultarCurso();
+        StateHasChanged();
+    }
+
+}

@@ -1,0 +1,19 @@
+﻿<div class="container">
+    <div class="col-12">
+        <img src="Page_not_found.png" alt="Error Image" class="error-image"/>
+        <p class="error-message">@UserMessage</p>
+
+        @* @if (ShowDevMessage) *@
+        @* { *@
+        @*     <p class="dev-message">@DevMessage</p> *@
+        @* } *@
+    </div>
+
+</div>
+
+@code {
+
+    [Parameter] public string UserMessage { get; set; } // Mensaje para el usuario
+
+    [Parameter] public string DevMessage { get; set; } // Mensaje para los desarrolladores
+}
